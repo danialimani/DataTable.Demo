@@ -1,0 +1,26 @@
+﻿@typeparam TItem
+@using Microsoft.JSInterop
+@if (Template != null)
+{
+    if (Table.CheckColumnName(PropertyName))
+    {
+
+        <td class="@Table.Option.DiTd">
+            @Template
+        </td>
+
+    }
+}
+
+@code {
+    [Parameter]
+    public Table<TItem> Table { get; set; }
+    [Parameter]
+    public RenderFragment Template { get; set; }
+    [Parameter]
+    public string PropertyName { get; set; }
+    [Inject]
+    public IJSRuntime JSRuntime { get; set; }
+   
+
+}

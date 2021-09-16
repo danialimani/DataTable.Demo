@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Remove="wwwroot\css\brands.css" />
+    <Content Remove="wwwroot\css\brands.min.css" />
+    <Content Remove="wwwroot\css\fontawesome.css" />
+    <Content Remove="wwwroot\css\fontawesome.min.css" />
+    <Content Remove="wwwroot\css\solid.css" />
+    <Content Remove="wwwroot\css\solid.min.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\css\brands.css" />
+    <None Include="wwwroot\css\brands.min.css" />
+    <None Include="wwwroot\css\fontawesome.css" />
+    <None Include="wwwroot\css\fontawesome.min.css" />
+    <None Include="wwwroot\css\solid.css" />
+    <None Include="wwwroot\css\solid.min.css" />
+    <None Include="wwwroot\IRANSans\WebFonts\fonts\woff2\IRANSansWeb.woff2" />
+    <None Include="wwwroot\IRANSans\WebFonts\fonts\woff2\IRANSansWeb_Black.woff2" />
+    <None Include="wwwroot\IRANSans\WebFonts\fonts\woff2\IRANSansWeb_Bold.woff2" />
+    <None Include="wwwroot\IRANSans\WebFonts\fonts\woff2\IRANSansWeb_Light.woff2" />
+    <None Include="wwwroot\IRANSans\WebFonts\fonts\woff2\IRANSansWeb_Medium.woff2" />
+    <None Include="wwwroot\IRANSans\WebFonts\fonts\woff2\IRANSansWeb_UltraLight.woff2" />
+    <None Include="wwwroot\webfonts\fa-brands-400.svg" />
+    <None Include="wwwroot\webfonts\fa-brands-400.woff2" />
+    <None Include="wwwroot\webfonts\fa-regular-400.svg" />
+    <None Include="wwwroot\webfonts\fa-regular-400.woff2" />
+    <None Include="wwwroot\webfonts\fa-solid-900.svg" />
+    <None Include="wwwroot\webfonts\fa-solid-900.woff2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="5.0.9" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="5.0.9" PrivateAssets="all" />
+    <PackageReference Include="System.Net.Http.Json" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DI.DataTable\DI.DataTable.csproj" />
+  </ItemGroup>
+
+</Project>

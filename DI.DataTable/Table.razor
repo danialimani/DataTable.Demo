@@ -1,0 +1,818 @@
+﻿@typeparam TItem
+@using System.Globalization
+@using OfficeOpenXml
+
+
+<div class="@Option.DiContent" dir="@Option.Direction">
+    @if (Header != null)
+    {
+        @Header
+    }
+
+    @if (Data != null && Items != null && PropertyOptions != null)
+    {
+        <table class="@Option.DiTable">
+            <thead class="@Option.DiThead">
+                <tr>
+                    @foreach (var th in PropertyOptions)
+                    {
+                        if (th.Value.IsShow && th.Value.IsVisible)
+                        {
+                            <th class="@Option.DiTh">
+                                @if (th.Key == "Number")
+                                {
+                                    <a class="@Option.DiThText">
+                                        @th.Value.DisplayName
+                                    </a>
+                                    <div>
+                                        <input class="@Option.DiThInput" style="width:50px" type="text" disabled="disabled" />
+                                    </div>
+                                }
+                                else
+                                {
+                                    @if (th.Key == ActiveSortColumnName)
+                                    {
+                                        if (IsAssending)
+                                        {
+                                            <a class="@Option.DiThIcon @Option.DiThActiveIcon" @onclick="()=> { Sort(th.Key,true); }">
+                                                <i class="fas fa-long-arrow-alt-up"></i>
+                                            </a>
+                                            <a class="@Option.DiThIcon" @onclick="()=> { Sort(th.Key,false); }">
+                                                <i class="fas fa-long-arrow-alt-down"></i>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a class="@Option.DiThIcon" @onclick="()=> { Sort(th.Key,true); }">
+                                                <i class="fas fa-long-arrow-alt-up"></i>
+                                            </a>
+                                            <a class="@Option.DiThIcon @Option.DiThActiveIcon" @onclick="()=> { Sort(th.Key,false); }">
+                                                <i class="fas fa-long-arrow-alt-down"></i>
+                                            </a>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <a class="@Option.DiThIcon" @onclick="()=> { Sort(th.Key,true); }">
+                                            <i class="fas fa-long-arrow-alt-up"></i>
+                                        </a>
+                                        <a class="@Option.DiThIcon" @onclick="()=> { Sort(th.Key,false); }">
+                                            <i class="fas fa-long-arrow-alt-down"></i>
+                                        </a>
+                                    }
+                                    <a class="@Option.DiThText" @onclick="()=> { Sort(th.Key,!IsAssending); }">
+                                        @th.Value.DisplayName
+                                    </a>
+                                    <div tabindex="1" @onfocusout="()=> { PropertyOptions.ToList().ForEach(c =>  c.Value.IsFilterActive = false); }" style="display:flex;position:relative;">
+                                        <input class="@Option.DiThInput" type="text" @oninput="(ChangeEventArgs e)=> { Filter(e,th.Key); }" />
+                                        <a class="@Option.DiThIcon" @onclick="()=> { th.Value.IsFilterActive = !th.Value.IsFilterActive; }">
+                                            <i class="fas fa-filter"></i>
+                                        </a>
+                                        @if (th.Value.IsFilterActive)
+                                        {
+                                            <div class="@Option.DiThTypeFilter">
+                                                @foreach (var item in FilterTypes)
+                                                {
+                                                    @if (th.Value.FilterType == item.Value.ToString())
+                                                    {
+                                                        <div class="@Option.DiThTypeFilterItem @Option.DiThTypeFilterItemActive">
+                                                            <a @onclick="()=> { ChangeFilterType(item.Value.ToString(), th.Key); }">
+                                                                @item.Title
+                                                            </a>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="@Option.DiThTypeFilterItem">
+                                                            <a @onclick="()=> { ChangeFilterType(item.Value.ToString(), th.Key); }">
+                                                                @item.Title
+                                                            </a>
+                                                        </div>
+                                                    }
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </th>
+                        }
+                    }
+                    @if (Option.OnDetail != null && PropertyOptions["OnDetail"].IsVisible)
+                    {
+                        <th class="@Option.DiTh @Option.DiThDetail">
+                            <a class="">@Option.LableDetail</a>
+                            <div>
+                                <input class="@Option.DiThInput" style="visibility:hidden;width:10px" type="text" disabled="disabled" />
+                            </div>
+                        </th>
+                    }
+                    @if (Option.OnEdit != null && PropertyOptions["OnEdit"].IsVisible)
+                    {
+                        <th class="@Option.DiTh @Option.DiTdEdit">
+                            <a class="">@Option.LableEdit</a>
+                            <div>
+                                <input class="@Option.DiThInput" style="visibility:hidden;width:10px;" type="text" disabled="disabled" />
+                            </div>
+                        </th>
+                    }
+                    @if (Option.OnDelete != null && PropertyOptions["OnDelete"].IsVisible)
+                    {
+                        <th class="@Option.DiTh @Option.DiThDelete">
+                            <a class="">@Option.LableDelete</a>
+                            <div>
+                                <input class="@Option.DiThInput" style="visibility:hidden;width:10px;" type="text" disabled="disabled" />
+                            </div>
+                        </th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int RowCounter = 1;
+                    if (PageNumber > 1)
+                    {
+                        RowCounter = ((PageNumber - 1) * Option.RowCount) + 1;
+                    }
+                }
+                @foreach (var row in Items)
+                {
+                    <tr>
+                        @if (PropertyOptions.ContainsKey("Number") && PropertyOptions["Number"].IsVisible && PropertyOptions["Number"].IsShow)
+                        {
+                            @if (Option.Direction == "rtl")
+                            {
+                                <td class="@Option.DiTd">
+                                    @ToPersianNumber(RowCounter.ToString())
+                                </td>
+                            }
+                            else
+                            {
+                                <td class="@Option.DiTd">
+                                    @RowCounter
+                                </td>
+                            }
+                        }
+                        @if (Tr == null)
+                        {
+                            @foreach (var column in PropertyOptions)
+                            {
+                                if (column.Value.IsShow && column.Value.IsVisible && column.Key != "Number")
+                                {
+                                    <td class="@Option.DiTd">
+                                        @row.GetType().GetProperty(column.Key).GetValue(row)
+                                    </td>
+                                }
+                            }
+                        }
+                        else
+                        {
+                            @if (PropertyOptions.ContainsKey("Id") && PropertyOptions["Id"].IsShow && PropertyOptions["Id"].IsShow)
+                            {
+                                <td class="@Option.DiTd">
+                                    @row.GetType().GetProperty("Id").GetValue(row)
+                                </td>
+                            }
+                            @Tr(row)
+                        }
+
+                        @if (Option.OnDetail != null && PropertyOptions["OnDetail"].IsVisible)
+                        {
+                            <td class="@Option.DiTdDetail">
+                                <a @onclick="()=> { Option.OnDetail(row); }">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </a>
+                            </td>
+                        }
+                        @if (Option.OnEdit != null && PropertyOptions["OnEdit"].IsVisible)
+                        {
+                            <td class="@Option.DiTdEdit">
+                                <a @onclick="()=> { Option.OnEdit(row); }">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </td>
+                        }
+                        @if (Option.OnDelete != null && PropertyOptions["OnDelete"].IsVisible)
+                        {
+                            <td class="@Option.DiTdDelete">
+                                <a @onclick="()=> { Option.OnDelete(row); }">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        }
+
+                    </tr>
+                    RowCounter++;
+                }
+            </tbody>
+            @**@
+            <tfoot class="@Option.DiFooter">
+                <tr>
+                    <td colspan="@PropertyOptions.ToList().Where(c=>c.Value.IsVisible==true).Count()">
+                        <div style="display:flex">
+                            <a @onclick="ExportExcel" class="@Option.DiExcelLink">
+                                <i class="fas fa-file-excel"></i>
+                                <span>
+                                    @Option.LableExcel
+                                </span>
+                            </a>
+                            <div class="@Option.DiColumns" @onfocusout="()=> { IsShowColumns = false; }" tabindex="1">
+                                <a @onclick="()=> { IsShowColumns = !IsShowColumns; }">
+                                    <i class="fas fa-columns"></i>
+                                    <span>
+                                        @Option.LableColumns
+                                    </span>
+                                </a>
+                                @if (IsShowColumns)
+                                {
+                                    <div class="@Option.DiVisibleColumns">
+                                        @foreach (var item in PropertyOptions)
+                                        {
+
+                                            <a class="@Option.DiVisibleColumnsItem" @onclick="()=> { ChangeVisibility(item.Key); }">
+                                                @if (item.Value.IsVisible)
+                                                {
+                                                    <span>
+                                                        <i class="far fa-check-square"></i>
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span>
+                                                        <i class="far fa-square"></i>
+                                                    </span>
+                                                }
+                                                <span style="display:inline-block;padding-right:8px;">
+                                                    @item.Value.DisplayName
+                                                </span>
+                                            </a>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            @if (Option.IsActivePagination)
+                            {
+                                <a class="@Option.DiPrevious" @onclick="Previous">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                                <input class="@Option.DiPageInput" type="number" value="@PageNumber" @oninput="(ChangeEventArgs e)=> {  try{ if(int.Parse(e.Value.ToString())<=PageCount){GoToPageNumber(int.Parse(e.Value.ToString()));}}catch{}}" />
+                                <a class="@Option.DiNext" @onclick="Next"><i class="fas fa-chevron-left"></i></a>
+                                <span>
+                                    @if (Option.Direction == "rtl")
+                                    {
+                                        @Option.LablePage @ToPersianNumber(PageNumber.ToString()) <span>-</span> @ToPersianNumber(PageCount.ToString())
+                                    }
+                                    else
+                                    {
+
+                                        @Option.LablePage@PageNumber<span>-</span>@PageCount
+
+                                    }
+                                </span>
+                                <select @onchange="ChangeShowCounRow" class="@Option.DiSelect">
+                                    <option value="10">
+                                        10
+                                    </option>
+                                    <option selected value="20">
+                                        20
+                                    </option>
+                                    <option value="50">
+                                        50
+                                    </option>
+                                    <option value="100">
+                                        100
+                                    </option>
+                                </select>
+                            }
+                        </div>
+                    </td>
+
+                </tr>
+            </tfoot>
+        </table>
+    }
+</div>
+
+@code {
+    [Inject]
+    public IBlazorDownloadFileService BlazorDownloadFileService { get; set; }
+    [Parameter]
+    public IEnumerable<TItem> Data { get; set; }
+    [Parameter]
+    public RenderFragment<TItem> Tr { get; set; }
+    [Parameter]
+    public RenderFragment Header { get; set; }
+    [Parameter]
+    public TableOption Option { get; set; }
+    public bool IsShowColumns { get; set; }
+    public IEnumerable<TItem> Items { get; set; }
+    public IEnumerable<TItem> FilterData { get; set; }
+    public List<FilterType> FilterTypes { get; set; } = new();
+    public IEnumerable<PropertyDescriptor> PropertyDescriptors { get; set; }
+
+    public Dictionary<string, PropertyOption> PropertyOptions { get; set; } = new();
+
+    public string ActiveSortColumnName { get; set; }
+
+    public bool IsAssending { get; set; }
+    public int PageCount { get; set; }
+    public int PageNumber { get; set; } = 1;
+
+    protected override void OnInitialized()
+    {
+        FilterTypes.Add(new FilterType { Value = 0, Title = "شامل باشد با" });
+        FilterTypes.Add(new FilterType { Value = 1, Title = "شامل نباشد با" });
+        FilterTypes.Add(new FilterType { Value = 2, Title = "شروع شود با" });
+        FilterTypes.Add(new FilterType { Value = 3, Title = "تمام شود با" });
+        FilterTypes.Add(new FilterType { Value = 4, Title = "بزرگتر از" });
+        FilterTypes.Add(new FilterType { Value = 5, Title = "کوچکتر تر از" });
+        FilterTypes.Add(new FilterType { Value = 6, Title = "بزرگتر مساوی با" });
+        FilterTypes.Add(new FilterType { Value = 7, Title = "کوچکتر مساوی با" });
+    }
+
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            PropertyDescriptors = TypeDescriptor.GetProperties(typeof(TItem))
+                          .Cast<PropertyDescriptor>().ToList();
+            if (Option.IsShowRowNumber)
+            {
+                PropertyOptions.Add("Number", new PropertyOption
+                {
+                    DisplayName = "ردیف",
+                    IsShow = true,
+                    IsVisible = true,
+                });
+            }
+
+            if (Option.IsShowId)
+            {
+                PropertyOptions.Add("Id", new PropertyOption
+                {
+                    DisplayName = PropertyDescriptors.FirstOrDefault(c => c.Name == "Id").DisplayName,
+                    IsShow = true,
+                    IsVisible = true,
+                });
+            }
+
+            if (Tr == null)
+            {
+                foreach (var item in PropertyDescriptors)
+                {
+                    if (item.Name != "Id")
+                    {
+                        PropertyOptions.Add(item.Name, new PropertyOption
+                        {
+                            DisplayName = item.DisplayName,
+                            IsShow = true,
+                            IsVisible = true,
+                        });
+                    }
+
+                }
+            }
+
+            if (Option.OnDetail != null)
+            {
+                PropertyOptions.Add("OnDetail", new PropertyOption
+                {
+                    DisplayName = Option.LableDetail,
+                    IsShow = false,
+                    IsVisible = true,
+                });
+            }
+            if (Option.OnEdit != null)
+            {
+                PropertyOptions.Add("OnEdit", new PropertyOption
+                {
+                    DisplayName = Option.LableEdit,
+                    IsShow = false,
+                    IsVisible = true,
+                });
+            }
+            if (Option.OnDelete != null)
+            {
+                PropertyOptions.Add("OnDelete", new PropertyOption
+                {
+                    DisplayName = Option.LableDelete,
+                    IsShow = false,
+                    IsVisible = true,
+                });
+            }
+        }
+    }
+    protected override void OnParametersSet()
+    {
+        if (Data != default)
+        {
+            Items = Data;
+            if (Option.IsActivePagination)
+            {
+                PageCount = Data.Count() % Option.RowCount == 0 ? Data.Count() / Option.RowCount : (int)(Data.Count() / Option.RowCount) + 1;
+                GoToPageNumber(1);
+            }
+
+        }
+    }
+
+    public bool CheckColumnName(string propertyName)
+    {
+        if (PropertyOptions.ContainsKey(propertyName) == false)
+        {
+            PropertyOptions.Add(propertyName, new PropertyOption
+            {
+                DisplayName = PropertyDescriptors.FirstOrDefault(c => c.Name == propertyName).DisplayName,
+                IsShow = true,
+                IsVisible = true,
+
+            });
+            StateHasChanged();
+            return true;
+        }
+        else
+        {
+            return PropertyOptions[propertyName].IsVisible;
+        }
+    }
+    public void GoToPageNumber(int pageNumber)
+    {
+        PageNumber = pageNumber;
+        if (FilterData == null)
+        {
+            Items = Data.Skip((PageNumber - 1) * Option.RowCount).Take(Option.RowCount).ToList();
+        }
+        else
+        {
+            Items = FilterData.Skip((PageNumber - 1) * Option.RowCount).Take(Option.RowCount).ToList();
+        }
+        StateHasChanged();
+    }
+    public void Next()
+    {
+        if (PageNumber < PageCount)
+        {
+            PageNumber++;
+            GoToPageNumber(PageNumber);
+        }
+    }
+    public void Previous()
+    {
+        if (PageNumber > 1)
+        {
+            PageNumber--;
+            GoToPageNumber(PageNumber);
+        }
+    }
+    public void ChangeShowCounRow(ChangeEventArgs e)
+    {
+        Option.RowCount = int.Parse(e.Value.ToString());
+        if (FilterData != null)
+        {
+            PageCount = FilterData.Count() % Option.RowCount == 0 ? Items.Count() / Option.RowCount : (int)(FilterData.Count() / Option.RowCount) + 1;
+        }
+        else
+        {
+            PageCount = Data.Count() % Option.RowCount == 0 ? Items.Count() / Option.RowCount : (int)(Data.Count() / Option.RowCount) + 1;
+        }
+        GoToPageNumber(1);
+    }
+    public void Sort(string propertyName, bool isAssending)
+    {
+        ActiveSortColumnName = propertyName;
+        IsAssending = isAssending;
+        if (isAssending)
+        {
+            Items = Items.OrderBy(c => c.GetType().GetProperties().FirstOrDefault(p => p.Name == propertyName).GetValue(c)).ToList();
+            FilterData = FilterData?.OrderBy(c => c.GetType().GetProperties().FirstOrDefault(p => p.Name == propertyName).GetValue(c)).ToList();
+            Data = Data?.OrderBy(c => c.GetType().GetProperties().FirstOrDefault(p => p.Name == propertyName).GetValue(c)).ToList();
+        }
+        else
+        {
+            Items = Items.OrderByDescending(c => c.GetType().GetProperties().FirstOrDefault(p => p.Name == propertyName).GetValue(c)).ToList();
+            FilterData = FilterData?.OrderByDescending(c => c.GetType().GetProperties().FirstOrDefault(p => p.Name == propertyName).GetValue(c)).ToList();
+            Data = Data?.OrderByDescending(c => c.GetType().GetProperties().FirstOrDefault(p => p.Name == propertyName).GetValue(c)).ToList();
+        }
+        if (Option.IsActivePagination)
+        {
+            GoToPageNumber(PageNumber);
+        }
+        StateHasChanged();
+    }
+
+    public void Filter(ChangeEventArgs e, string name)
+    {
+        if (PropertyOptions.ContainsKey(name))
+        {
+            PropertyOptions[name].FilterValue = e.Value.ToString();
+        }
+
+        List<TItem> curenData = Data.ToList();
+        foreach (var serachValue in PropertyOptions)
+        {
+            if (string.IsNullOrEmpty(serachValue.Value.FilterValue) == false)
+            {
+                string k = serachValue.Key.ToString();
+                string v = serachValue.Value.FilterValue.ToString();
+                string filterType = "0";
+                if (string.IsNullOrEmpty(serachValue.Value.FilterType) == false)
+                {
+                    filterType = serachValue.Value.FilterType;
+                }
+                if (filterType == "0")
+                {
+                    curenData = curenData.Where(c => c.GetType().GetProperty(k).GetValue(c).ToString().Contains(v)).ToList();
+                }
+                else if (filterType == "1")
+                {
+                    curenData = curenData.Where(c => c.GetType().GetProperty(k).GetValue(c).ToString().Contains(v) == false).ToList();
+                }
+                else if (filterType == "2")
+                {
+                    curenData = curenData.Where(c => c.GetType().GetProperty(k).GetValue(c).ToString().StartsWith(v)).ToList();
+                }
+                else if (filterType == "3")
+                {
+                    curenData = curenData.Where(c => c.GetType().GetProperty(k).GetValue(c).ToString().EndsWith(v)).ToList();
+                }
+                else if (filterType == "4")
+                {
+                    int currentValue = 0;
+                    try
+                    {
+                        currentValue = int.Parse(v);
+                        curenData = curenData.Where(c => int.Parse(c.GetType().GetProperty(k).GetValue(c).ToString()) > currentValue).ToList();
+                    }
+                    catch
+                    {
+                        DateTime date;
+                        try
+                        {
+                            date = ToMiladi(v);
+                            curenData = curenData.Where(c => ToMiladi(c.GetType().GetProperty(k).GetValue(c).ToString()) < date).ToList();
+
+                        }
+                        catch
+                        {
+
+                        }
+                    }
+                }
+                else if (filterType == "5")
+                {
+                    int currentValue = 0;
+                    try
+                    {
+                        currentValue = int.Parse(v);
+                        curenData = curenData.Where(c => int.Parse(c.GetType().GetProperty(k).GetValue(c).ToString()) < currentValue).ToList();
+                    }
+                    catch
+                    {
+                        DateTime date;
+                        try
+                        {
+                            if (Option.DateType == DateType.Persian)
+                            {
+                                date = ToMiladi(v);
+                                curenData = curenData.Where(c => ToMiladi(c.GetType().GetProperty(k).GetValue(c).ToString()) > date).ToList();
+                            }
+                            else if (Option.DateType == DateType.Miladi)
+                            {
+                                date = DateTime.Parse(v);
+                                curenData = curenData.Where(c => DateTime.Parse(c.GetType().GetProperty(k).GetValue(c).ToString()) > date).ToList();
+
+                            }
+                            else if (Option.DateType == DateType.SerachByPersianToMiladi)
+                            {
+                                date = ToMiladi(v);
+                                curenData = curenData.Where(c => DateTime.Parse(c.GetType().GetProperty(k).GetValue(c).ToString()) > date).ToList();
+                            }
+
+                        }
+                        catch
+                        {
+
+                        }
+                    }
+                }
+                else if (filterType == "6")
+                {
+                    int currentValue = 0;
+                    try
+                    {
+                        currentValue = int.Parse(v);
+                        curenData = curenData.Where(c => int.Parse(c.GetType().GetProperty(k).GetValue(c).ToString()) >= currentValue).ToList();
+                    }
+                    catch
+                    {
+                        DateTime date;
+                        try
+                        {
+                            if (Option.DateType == DateType.Persian)
+                            {
+                                date = ToMiladi(v);
+                                curenData = curenData.Where(c => ToMiladi(c.GetType().GetProperty(k).GetValue(c).ToString()) <= date).ToList();
+                            }
+                            else if (Option.DateType == DateType.Miladi)
+                            {
+                                date = DateTime.Parse(v);
+                                curenData = curenData.Where(c => DateTime.Parse(c.GetType().GetProperty(k).GetValue(c).ToString()) <= date).ToList();
+
+                            }
+                            else if (Option.DateType == DateType.SerachByPersianToMiladi)
+                            {
+                                date = ToMiladi(v);
+                                curenData = curenData.Where(c => DateTime.Parse(c.GetType().GetProperty(k).GetValue(c).ToString()) <= date).ToList();
+                            }
+
+                        }
+                        catch
+                        {
+
+                        }
+                    }
+                }
+                else if (filterType == "7")
+                {
+                    int currentValue = 0;
+                    try
+                    {
+                        currentValue = int.Parse(v);
+                        curenData = curenData.Where(c => int.Parse(c.GetType().GetProperty(k).GetValue(c).ToString()) <= currentValue).ToList();
+                    }
+                    catch
+                    {
+                        DateTime date;
+                        try
+                        {
+                            if (Option.DateType == DateType.Persian)
+                            {
+                                date = ToMiladi(v);
+                                curenData = curenData.Where(c => ToMiladi(c.GetType().GetProperty(k).GetValue(c).ToString()) >= date).ToList();
+                            }
+                            else if (Option.DateType == DateType.Miladi)
+                            {
+                                date = DateTime.Parse(v);
+                                curenData = curenData.Where(c => DateTime.Parse(c.GetType().GetProperty(k).GetValue(c).ToString()) >= date).ToList();
+
+                            }
+                            else if (Option.DateType == DateType.SerachByPersianToMiladi)
+                            {
+                                date = ToMiladi(v);
+                                curenData = curenData.Where(c => DateTime.Parse(c.GetType().GetProperty(k).GetValue(c).ToString()) >= date).ToList();
+                            }
+                            date = ToMiladi(v);
+                            curenData = curenData.Where(c => ToMiladi(c.GetType().GetProperty(k).GetValue(c).ToString()) >= date).ToList();
+
+                        }
+                        catch
+                        {
+
+                        }
+                    }
+                }
+            }
+        }
+        FilterData = curenData.ToList();
+        Items = curenData.ToList();
+        if (Option.IsActivePagination)
+        {
+            PageNumber = 1;
+            PageCount = Items.Count() % Option.RowCount == 0 ? Items.Count() / Option.RowCount : (int)(Items.Count() / Option.RowCount) + 1;
+            Items = Items.Skip((PageNumber - 1) * Option.RowCount).Take(Option.RowCount).ToList();
+        }
+        StateHasChanged();
+    }
+    public void ChangeFilterType(string value, string propertyName)
+    {
+        if (PropertyOptions.ContainsKey(propertyName))
+        {
+            ChangeEventArgs s = new ChangeEventArgs();
+            PropertyOptions[propertyName].FilterType = value;
+            if (string.IsNullOrEmpty(PropertyOptions[propertyName].FilterValue))
+            {
+                s.Value = "";
+            }
+            else
+            {
+                s.Value = PropertyOptions[propertyName].FilterValue;
+            }
+            PropertyOptions[propertyName].IsFilterActive = false;
+            Filter(s, propertyName);
+        }
+    }
+
+    public void ChangeVisibility(string propertyName)
+    {
+        PropertyOptions[propertyName].IsVisible = !PropertyOptions[propertyName].IsVisible;
+    }
+
+    public async Task<DowloadFileResult> ExportExcel()
+    {
+        var package = new ExcelPackage();
+        package.Workbook.Properties.Title = typeof(TItem).Name + "-Report";
+        package.Workbook.Properties.Author = "DanialImani1370";
+        package.Workbook.Properties.Subject = typeof(TItem).Name + "-Report";
+        package.Workbook.Properties.Keywords = "Report";
+        var worksheet = package.Workbook.Worksheets.Add("RightToLeft");
+        worksheet.View.RightToLeft = true;
+        IEnumerable<TItem> items;
+        if (FilterData != null)
+        {
+            items = FilterData;
+        }
+        else
+        {
+            items = Data;
+        }
+        //First add the headers
+        int index = 0;
+        foreach (var th in PropertyOptions)
+        {
+            if (th.Value.IsShow && th.Value.IsVisible)
+            {
+                index++;
+                worksheet.Cells[1, index].Value = th.Value.DisplayName;
+            }
+        }
+
+        int indexRow = 2;
+        foreach (var row in items)
+        {
+            int indexColumn = 1;
+            int counter = indexRow - 1;
+            foreach (var column in PropertyOptions)
+            {
+                if (column.Value.IsShow && column.Value.IsVisible)
+                {
+                    if (Option.IsShowRowNumber && column.Key == "Number")
+                    {
+                        worksheet.Cells[indexRow, indexColumn].Value = counter;
+                        indexColumn++;
+                    }
+                    if (Option.IsShowRowNumber && column.Key == "Id")
+                    {
+                        worksheet.Cells[indexRow, indexColumn].Value = row.GetType().GetProperty(column.Key).GetValue(row);
+                        indexColumn++;
+                    }
+
+                    if (column.Key != "Id" && column.Key != "Number")
+                    {
+                        worksheet.Cells[indexRow, indexColumn].Value = row.GetType().GetProperty(column.Key).GetValue(row);
+                        indexColumn++;
+                    }
+
+
+                }
+            }
+            indexRow++;
+        }
+
+        byte[] reportBytes;
+        reportBytes = package.GetAsByteArray();
+        string name = typeof(TItem).Name + $"{DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}.xlsx";
+        var s = await BlazorDownloadFileService.DownloadFile(name, reportBytes, "application/octet-stream");
+        return s;
+    }
+
+    public DateTime ToMiladi(string pDate)
+    {
+        string[] date = pDate.Split('/', '-');
+        PersianCalendar pc = new PersianCalendar();
+        int day = int.Parse(date[2].ToString());
+        int month = int.Parse(date[1].ToString());
+        int year = int.Parse(date[0].ToString());
+        DateTime dt = new DateTime(year, month, day, pc);
+        return dt;
+    }
+    public string ToPersianNumber(string number)
+    {
+        if (string.IsNullOrEmpty(number) == false)
+        {
+            Dictionary<char, char> LettersDictionary = new Dictionary<char, char>
+            {
+                ['0'] = '۰',
+                ['1'] = '۱',
+                ['2'] = '۲',
+                ['3'] = '۳',
+                ['4'] = '۴',
+                ['5'] = '۵',
+                ['6'] = '۶',
+                ['7'] = '۷',
+                ['8'] = '۸',
+                ['9'] = '۹'
+            };
+            foreach (var item in number)
+            {
+                var x = LettersDictionary.Any(t => t.Key == item);
+                if (x)
+                    number = number.Replace(item, LettersDictionary[item]);
+            }
+            return number.ToString();
+        }
+        else
+        {
+            return "";
+        }
+    }
+}
