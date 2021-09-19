@@ -37,8 +37,8 @@ input[type=number] {
 }
 
 .di-conetnt {
-     width: 800px;
-    height: 800px;
+     max-width: 800px;
+    max-height: 800px;
     overflow: auto;
     margin:auto;
     position:relative;
@@ -190,10 +190,10 @@ input[type=number] {
 
 .di-visible-columns {
     width: 150px;
-    height: 300px;
+    height: 200px;
     position: absolute;
     bottom: 35px;
-    z-index: 10;
+    z-index: 100;
     background-color:#fafafa;
     overflow-y:auto;
 }

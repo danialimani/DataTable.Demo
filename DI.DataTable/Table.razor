@@ -3,13 +3,13 @@
 @using OfficeOpenXml
 
 
-<div class="@Option.DiContent" dir="@Option.Direction">
+<div class="@Option.DiContent" style="direction:@Option.Direction" dir="@Option.Direction">
     @if (Header != null)
     {
         @Header
     }
 
-    @if (Data != null && Items != null && PropertyOptions != null)
+    @if (Data != null && Items != null && PropertyOptions != null && Option!=null)
     {
         <table class="@Option.DiTable">
             <thead class="@Option.DiThead">
@@ -97,7 +97,7 @@
                             </th>
                         }
                     }
-                    @if (Option.OnDetail != null && PropertyOptions["OnDetail"].IsVisible)
+                    @if (Option.OnDetail != null && PropertyOptions.ContainsKey("OnDetail") && PropertyOptions["OnDetail"].IsVisible)
                     {
                         <th class="@Option.DiTh @Option.DiThDetail">
                             <a class="">@Option.LableDetail</a>
@@ -106,7 +106,7 @@
                             </div>
                         </th>
                     }
-                    @if (Option.OnEdit != null && PropertyOptions["OnEdit"].IsVisible)
+                    @if (Option.OnEdit != null && PropertyOptions.ContainsKey("OnEdit") && PropertyOptions["OnEdit"].IsVisible)
                     {
                         <th class="@Option.DiTh @Option.DiTdEdit">
                             <a class="">@Option.LableEdit</a>
@@ -115,7 +115,7 @@
                             </div>
                         </th>
                     }
-                    @if (Option.OnDelete != null && PropertyOptions["OnDelete"].IsVisible)
+                    @if (Option.OnDelete != null && PropertyOptions.ContainsKey("OnDelete") && PropertyOptions["OnDelete"].IsVisible)
                     {
                         <th class="@Option.DiTh @Option.DiThDelete">
                             <a class="">@Option.LableDelete</a>
@@ -175,7 +175,7 @@
                             @Tr(row)
                         }
 
-                        @if (Option.OnDetail != null && PropertyOptions["OnDetail"].IsVisible)
+                        @if (Option.OnDetail != null && PropertyOptions.ContainsKey("OnDetail") && PropertyOptions["OnDetail"].IsVisible)
                         {
                             <td class="@Option.DiTdDetail">
                                 <a @onclick="()=> { Option.OnDetail(row); }">
@@ -183,7 +183,7 @@
                                 </a>
                             </td>
                         }
-                        @if (Option.OnEdit != null && PropertyOptions["OnEdit"].IsVisible)
+                        @if (Option.OnEdit != null && PropertyOptions.ContainsKey("OnEdit") && PropertyOptions["OnEdit"].IsVisible)
                         {
                             <td class="@Option.DiTdEdit">
                                 <a @onclick="()=> { Option.OnEdit(row); }">
@@ -191,7 +191,7 @@
                                 </a>
                             </td>
                         }
-                        @if (Option.OnDelete != null && PropertyOptions["OnDelete"].IsVisible)
+                        @if (Option.OnDelete != null && PropertyOptions.ContainsKey("OnEdit") && PropertyOptions["OnDelete"].IsVisible)
                         {
                             <td class="@Option.DiTdDelete">
                                 <a @onclick="()=> { Option.OnDelete(row); }">
@@ -319,6 +319,72 @@
 
     protected override void OnInitialized()
     {
+        PropertyDescriptors = TypeDescriptor.GetProperties(typeof(TItem))
+                .Cast<PropertyDescriptor>().ToList();
+        if (Option.IsShowRowNumber)
+        {
+            PropertyOptions.Add("Number", new PropertyOption
+            {
+                DisplayName = "ردیف",
+                IsShow = true,
+                IsVisible = true,
+            });
+        }
+
+        if (Option.IsShowId)
+        {
+            PropertyOptions.Add("Id", new PropertyOption
+            {
+                DisplayName = PropertyDescriptors.FirstOrDefault(c => c.Name == "Id").DisplayName,
+                IsShow = true,
+                IsVisible = true,
+            });
+        }
+
+        if (Tr == null)
+        {
+            foreach (var item in PropertyDescriptors)
+            {
+                if (item.Name != "Id")
+                {
+                    PropertyOptions.Add(item.Name, new PropertyOption
+                    {
+                        DisplayName = item.DisplayName,
+                        IsShow = true,
+                        IsVisible = true,
+                    });
+                }
+
+            }
+        }
+
+        if (Option.OnDetail != null)
+        {
+            PropertyOptions.Add("OnDetail", new PropertyOption
+            {
+                DisplayName = Option.LableDetail,
+                IsShow = false,
+                IsVisible = true,
+            });
+        }
+        if (Option.OnEdit != null)
+        {
+            PropertyOptions.Add("OnEdit", new PropertyOption
+            {
+                DisplayName = Option.LableEdit,
+                IsShow = false,
+                IsVisible = true,
+            });
+        }
+        if (Option.OnDelete != null)
+        {
+            PropertyOptions.Add("OnDelete", new PropertyOption
+            {
+                DisplayName = Option.LableDelete,
+                IsShow = false,
+                IsVisible = true,
+            });
+        }
         FilterTypes.Add(new FilterType { Value = 0, Title = "شامل باشد با" });
         FilterTypes.Add(new FilterType { Value = 1, Title = "شامل نباشد با" });
         FilterTypes.Add(new FilterType { Value = 2, Title = "شروع شود با" });
@@ -334,72 +400,8 @@
     {
         if (firstRender)
         {
-            PropertyDescriptors = TypeDescriptor.GetProperties(typeof(TItem))
-                          .Cast<PropertyDescriptor>().ToList();
-            if (Option.IsShowRowNumber)
-            {
-                PropertyOptions.Add("Number", new PropertyOption
-                {
-                    DisplayName = "ردیف",
-                    IsShow = true,
-                    IsVisible = true,
-                });
-            }
 
-            if (Option.IsShowId)
-            {
-                PropertyOptions.Add("Id", new PropertyOption
-                {
-                    DisplayName = PropertyDescriptors.FirstOrDefault(c => c.Name == "Id").DisplayName,
-                    IsShow = true,
-                    IsVisible = true,
-                });
-            }
 
-            if (Tr == null)
-            {
-                foreach (var item in PropertyDescriptors)
-                {
-                    if (item.Name != "Id")
-                    {
-                        PropertyOptions.Add(item.Name, new PropertyOption
-                        {
-                            DisplayName = item.DisplayName,
-                            IsShow = true,
-                            IsVisible = true,
-                        });
-                    }
-
-                }
-            }
-
-            if (Option.OnDetail != null)
-            {
-                PropertyOptions.Add("OnDetail", new PropertyOption
-                {
-                    DisplayName = Option.LableDetail,
-                    IsShow = false,
-                    IsVisible = true,
-                });
-            }
-            if (Option.OnEdit != null)
-            {
-                PropertyOptions.Add("OnEdit", new PropertyOption
-                {
-                    DisplayName = Option.LableEdit,
-                    IsShow = false,
-                    IsVisible = true,
-                });
-            }
-            if (Option.OnDelete != null)
-            {
-                PropertyOptions.Add("OnDelete", new PropertyOption
-                {
-                    DisplayName = Option.LableDelete,
-                    IsShow = false,
-                    IsVisible = true,
-                });
-            }
         }
     }
     protected override void OnParametersSet()
